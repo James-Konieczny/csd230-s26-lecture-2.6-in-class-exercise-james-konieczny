@@ -32,6 +32,10 @@
     </tbody>
 </table>
 <br/>
+<form th:action="@{/cart/checkout}" method="post">
+    <button type="submit">Checkout</button>
+</form>
+<br/>
 <a th:href="@{/books}">Back to Store</a>
 </body>
 </html>
