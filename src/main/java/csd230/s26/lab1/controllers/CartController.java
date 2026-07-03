@@ -1,22 +1,30 @@
 package csd230.s26.lab1.controllers;
 
 import csd230.s26.lab1.entities.CartEntity;
+import csd230.s26.lab1.entities.OrderEntity;
 import csd230.s26.lab1.entities.ProductEntity;
+import csd230.s26.lab1.entities.PublicationEntity;
 import csd230.s26.lab1.repositories.CartRepository;
+import csd230.s26.lab1.repositories.OrderRepository;
 import csd230.s26.lab1.repositories.ProductRepository;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @Controller
 @RequestMapping("/cart")
 public class CartController {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
 
-    public CartController(CartRepository cartRepository, ProductRepository productRepository) {
+    public CartController(CartRepository cartRepository, ProductRepository productRepository, OrderRepository orderRepository) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
+        this.orderRepository = orderRepository;
     }
 
     // 1. VIEW CART
@@ -59,6 +67,35 @@ public class CartController {
             cartRepository.save(cart);
         }
         return "redirect:/cart";
+    }
+
+    @PostMapping("/checkout")
+    @Transactional
+    public String checkout(Model model) {
+        Long defaultCartId = 1L;
+        CartEntity cart = cartRepository.findById(defaultCartId).orElseThrow(() -> new RuntimeException("Cart not found"));
+        OrderEntity order = new OrderEntity();
+        order.setOrderDate(LocalDateTime.now());
+
+        double totalAmount = 0.0;
+
+        for (ProductEntity product : cart.getProducts()) {
+            totalAmount += product.getPrice();
+            if (product instanceof PublicationEntity publication) {
+                publication.setCopies(
+                        publication.getCopies() - 1
+                );
+                productRepository.save(publication);
+            }
+            order.getProducts().add(product);
+        }
+
+        order.setTotalAmount(totalAmount);
+        orderRepository.save(order);
+        cart.getProducts().clear();
+        cartRepository.save(cart);
+        model.addAttribute("order", order);
+        return "orderDetails";
     }
 }
 

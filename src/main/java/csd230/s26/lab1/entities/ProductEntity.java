@@ -17,24 +17,6 @@ public abstract class ProductEntity implements Serializable, SaleableItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ... existing fields (id, productId) ...
-
-    @ManyToMany(mappedBy = "products")
-    private Set<CartEntity> carts = new java.util.HashSet<>();
-    private String productId;
-
-    public ProductEntity() {
-        setProductId(UUID.randomUUID().toString());
-    }
-
-    public Set<CartEntity> getCarts() {
-        return carts;
-    }
-
-    public void setCarts(Set<CartEntity> carts) {
-        this.carts = carts;
-    }
-
     public Long getId() {
         return id;
     }
@@ -43,6 +25,15 @@ public abstract class ProductEntity implements Serializable, SaleableItem {
         this.id = id;
     }
 
+    private Double price;
+    private String productId;
+
+
+    public ProductEntity() {
+        setProductId(UUID.randomUUID().toString());
+    }
+
+
     // Getters and Setters
     public String getProductId() {
         return productId;
@@ -50,6 +41,17 @@ public abstract class ProductEntity implements Serializable, SaleableItem {
 
     public void setProductId(String productId) {
         this.productId = productId;
+    }
+
+    @ManyToMany(mappedBy = "products")
+    private Set<CartEntity> carts = new java.util.HashSet<>();
+
+    public Set<CartEntity> getCarts() {
+        return carts;
+    }
+
+    public void setCarts(Set<CartEntity> carts) {
+        this.carts = carts;
     }
 
     @Override
@@ -77,6 +79,4 @@ public abstract class ProductEntity implements Serializable, SaleableItem {
     public String getProductType() {
         return this.getClass().getSimpleName();
     }
-
-
 }

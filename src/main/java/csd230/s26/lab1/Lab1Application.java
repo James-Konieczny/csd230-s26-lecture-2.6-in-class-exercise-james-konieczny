@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 public class Lab1Application implements CommandLineRunner {
 
 	// Final fields for Constructor Injection
+	private final TurretSpiderRepository turretSpiderRepository;
+	private final ClutchRepository clutchRepository;
 	private final BookRepository bookRepository;
 	private final MagazineRepository magazineRepository;
 	private final DiscMagRepository discMagRepository;
@@ -28,12 +30,16 @@ public class Lab1Application implements CommandLineRunner {
 
 
 	// Hardened Constructor Injection (Standard for S26)
-	public Lab1Application(BookRepository bookRepository,
+	public Lab1Application(TurretSpiderRepository turretSpiderRepository,
+						   ClutchRepository clutchRepository,
+						   BookRepository bookRepository,
                            MagazineRepository magazineRepository,
                            DiscMagRepository discMagRepository,
                            TicketRepository ticketRepository,
                            ProductRepository productRepository,
                            CartRepository cartRepository, PasswordEncoder passwordEncoder, UserRepository userRepository) {
+		this.turretSpiderRepository = turretSpiderRepository;
+		this.clutchRepository = clutchRepository;
 		this.bookRepository = bookRepository;
 		this.magazineRepository = magazineRepository;
 		this.discMagRepository = discMagRepository;
@@ -58,6 +64,31 @@ public class Lab1Application implements CommandLineRunner {
 	@Transactional
 	public void run(String... args) throws Exception {
 		Faker faker = new Faker();
+
+		System.out.println("Generating Turret Spiders...");
+		String[] materials = {"Steel", "Aluminum", "Plastic", "Carbon Fiber"};
+		String[] purpose = {"To support turning", "To stop turning", "To support lifting", "To support stopping"};
+		for (int i = 0; i < 3; i++) {
+			TurretSpiderEntity turretSpider = new TurretSpiderEntity(
+					materials[faker.number().numberBetween(0, materials.length)],
+					purpose[faker.number().numberBetween(0, purpose.length)],
+					faker.number().numberBetween(99, 150),   // ball bearings
+					faker.number().numberBetween(6, 12)    // spoons
+			);
+			turretSpiderRepository.save(turretSpider);
+		}
+
+		System.out.println("Generating Clutch...");
+		String[] diskSize = {"Very Small", "Small", "Medium", "Large", "Extra Large"};
+		for (int i = 0; i < 3; i++) {
+			ClutchEntity clutch = new ClutchEntity(
+					materials[faker.number().numberBetween(0, materials.length)],
+					purpose[faker.number().numberBetween(0, purpose.length)],
+					diskSize[faker.number().numberBetween(0, diskSize.length)],
+					faker.bool().bool()
+			);
+			clutchRepository.save(clutch);
+		}
 
 		// --- 1. Create Books ---
 		System.out.println("Generating Books...");
@@ -126,20 +157,43 @@ public class Lab1Application implements CommandLineRunner {
 		CartEntity cart = new CartEntity();
 		cartRepository.save(cart);
 
-// 2. Retrieve an existing book from your generation loop
+		// 2. Retrieve an existing book from your generation loop
 		// get the first book
 		BookEntity someBook = bookRepository.findAll().get(0);  // ... retrieve one of your generated books ...
+		ClutchEntity someClutch = clutchRepository.findAll().get(0);
 
-// 3. Add to cart and save
+		// 3. Add to cart and save
 		cart.addProduct(someBook);
+		cart.addProduct(someClutch);
 		cartRepository.save(cart);
 
-// 4. Verification Output
+		// 4. Verification Output
 		System.out.println("\n--- Cart Verification ---");
 		cartRepository.findAll().forEach(c -> {
 			System.out.println("Cart ID: " + c.getId());
 			c.getProducts().forEach(p -> System.out.println(" - Contains: " + p.toString()));
 		});
+
+		System.out.println("\n--- Query Testing ---");
+
+		// 1. Test findByAuthor (Search for one of your faker-generated authors)
+		String authorToFind = bookRepository.findAll().get(0).getAuthor();
+		System.out.println("Searching for books by: " + authorToFind);
+		bookRepository.findByAuthor(authorToFind).forEach(System.out::println);
+
+		// 2. Test findByTitleContaining
+		System.out.println("\nSearching for titles containing 'Magazine':");
+		bookRepository.findByTitleContaining("Magazine").forEach(System.out::println);
+
+		// 3. Test findByPriceLessThan
+		System.out.println("\nSearching for cheap items (under $20.00):");
+		productRepository.findByPriceLessThan(20.0).forEach(p ->
+				System.out.println(p.getProductId() + ": " + p.getClass().getSimpleName()));
+
+		// 4. Test Custom Range Query
+		System.out.println("\nTesting Custom Price Range Query ($15 - $45):");
+		productRepository.findProductsInPriceRange(15.0, 45.0).forEach(System.out::println);
+
 
 		// ------------------------------------
 		// CREATE USERS (Lecture 2.6)

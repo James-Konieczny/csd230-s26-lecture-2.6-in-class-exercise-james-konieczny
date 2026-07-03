@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><title>Magazine Store Inventory</title></head>
+<body>
+<h1>Magazine List</h1>
+<p><a th:href="@{/cart}">[ View My Cart ]</a></p>
+<table border="1">
+    <thead>
+    <tr>
+        <th>Title</th>
+        <th>Current Issue</th>
+        <th>Price</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="magazine : ${magazine}">
+        <td th:text="${magazine.title}"></td>
+        <td th:text="${magazine.currentIssue}"></td>
+        <td th:text="${magazine.price}"></td>
+        <td>
+            <!-- Link to Edit, passing the specific magazine ID -->
+            <a th:href="@{/magazine/edit/{id}(id=${magazine.id})}">Edit</a> |
+
+            <a th:href="@{/magazine/delete/{id}(id=${magazine.id})}"
+               onclick="return confirm('Are you sure?')">Delete</a>
+        </td>
+        <td>
+            <a th:href="@{/magazine/edit/{id}(id=${magazine.id})}">Edit</a> |
+            <a th:href="@{/magazine/delete/{id}(id=${magazine.id})}" onclick="return confirm('Delete?')">Delete</a> |
+            <strong><a th:href="@{/cart/add/{id}(id=${magazine.id})}">Add to Cart</a></strong>
+        </td>
+
+    </tr>
+    </tbody>
+</table>
+<br/>
+<a th:href="@{/magazine/add}">Add New Magazine</a>
+</body>
+</html>
